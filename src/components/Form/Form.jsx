@@ -1,31 +1,43 @@
-import PropTypes from 'prop-types';
-
-import React, { useState } from 'react';
+import React from 'react';
+import { nanoid } from '@reduxjs/toolkit';
+import Notiflix from 'notiflix';
+import { useDispatch, useSelector } from 'react-redux';
+import { addContacts } from 'redux/contactsSlice';
 
 import { Forms, FormLable, FormInput, FormButton } from './Form.styled';
 
-export const Form = ({ onSubmit }) => {
-  const [name, setName] = useState('');
-  const [number, setNumber] = useState('');
-
-  const hundleNameChange = evt => {
-    setName(evt.target.value);
-  };
-
-  const hundleNumberChange = evt => {
-    setNumber(evt.target.value);
-  };
+export const Form = () => {
+  const contacts = useSelector(state => state.contacts.contacts);
+  const dispatch = useDispatch();
 
   const hundleSubmit = evt => {
     evt.preventDefault();
-    const newContact = { name, number };
-    onSubmit(newContact);
-    reset();
+    const name = evt.target.name.value;
+    const number = evt.target.number.value;
+    const newContact = {
+      name,
+      number,
+      id: nanoid(),
+    };
+    addContact(newContact);
+    evt.target.reset();
   };
 
-  const reset = () => {
-    setName('');
-    setNumber('');
+  const addContact = newContact => {
+    let isContains = false;
+    contacts.map(contact => {
+      if (contact.name === newContact.name) {
+        isContains = true;
+      }
+      return isContains;
+    });
+    isContains
+      ? Notiflix.Report.failure(
+          'Error',
+          `${newContact.name} is already in contacts`,
+          'close'
+        )
+      : dispatch(addContacts(newContact));
   };
 
   return (
@@ -35,11 +47,9 @@ export const Form = ({ onSubmit }) => {
         <FormInput
           type="text"
           name="name"
-          value={name}
           pattern="^[a-zA-Zа-яА-Я]+(([' -][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$"
           title="Name may contain only letters, apostrophe, dash and spaces. For example Adrian, Jacob Mercer, Charles de Batz de Castelmore d'Artagnan"
           required
-          onChange={hundleNameChange}
         />
       </FormLable>
       <FormLable>
@@ -47,18 +57,12 @@ export const Form = ({ onSubmit }) => {
         <FormInput
           type="tel"
           name="number"
-          value={number}
           pattern="\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}"
           title="Phone number must be digits and can contain spaces, dashes, parentheses and can start with +"
           required
-          onChange={hundleNumberChange}
         />
       </FormLable>
       <FormButton type="submit">Save contact</FormButton>
     </Forms>
   );
-};
-
-Form.propTypes = {
-  onSubmit: PropTypes.func.isRequired,
 };
